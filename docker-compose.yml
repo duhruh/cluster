@@ -1,11 +1,14 @@
 version: "3.4"
 services:
-        app:
+        manager:
                 build: .
                 volumes:
                         - .:/go/src/github.com/duhruh/cluster
                 depends_on:
                         - rabbit-manage
+                command: [
+                "go", "run", "cmd/manager/main.go"
+                ]
                 networks:
                         - backend
                           #        rabbit:
@@ -13,6 +16,17 @@ services:
                           #                ports:
                           #                        - "5672:5672"
                           #                        - "15672:15672"
+        worker:
+                build: .
+                volumes:
+                        - .:/go/src/github.com/duhruh/cluster
+                depends_on:
+                        - rabbit-manage
+                command: [
+                "go", "run", "cmd/worker/main.go"
+                ]
+                networks:
+                        - backend
         rabbit-manage:
                 image: rabbitmq:management
                 ports:

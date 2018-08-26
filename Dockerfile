@@ -8,5 +8,4 @@ ADD . /go/src/github.com/duhruh/cluster
 WORKDIR /go/src/github.com/duhruh/cluster
 
 
-CMD ["go", "run", "main.go"]
 

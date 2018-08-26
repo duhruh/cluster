@@ -5,7 +5,6 @@ import (
 )
 
 func main() {
-	println("hello")
 
 	rabbit := job.NewRabbitMQ("amqp://guest:guest@rabbit-manage:5672/")
 

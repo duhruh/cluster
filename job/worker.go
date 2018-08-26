@@ -7,7 +7,7 @@ import (
 
 type Worker interface {
 	Connect() error
-	Popit() (string, error)
+	Popit(Messenger) error
 	Close() error
 }
 
@@ -15,19 +15,19 @@ type Messenger func(msg string) bool
 
 type rabbitWorker struct {
 	amqpURI    string
-	connection *ampq.Connection
+	connection *amqp.Connection
 	queueName  string
 }
 
 func NewRabbitWorker(uri string) Worker {
 	return &rabbitWorker{
-		uri:       uri,
+		amqpURI:       uri,
 		queueName: "swarm-queue",
 	}
 }
 
 func (r *rabbitWorker) Connect() error {
-	connection, err := amqp.Dial(r.ampqURI)
+	connection, err := amqp.Dial(r.amqpURI)
 	if err != nil {
 		return fmt.Errorf("Dial: %v", err)
 	}
@@ -36,10 +36,10 @@ func (r *rabbitWorker) Connect() error {
 	return nil
 }
 
-func (r *rabbitWorker) Popit(m Messenger) (string, error) {
+func (r *rabbitWorker) Popit(m Messenger) error {
 	ch, err := r.connection.Channel()
 	if err != nil {
-		return "", nil
+		return fmt.Errorf("Channel: %v", err)
 	}
 
 	q, err := ch.QueueDeclare(
@@ -52,7 +52,7 @@ func (r *rabbitWorker) Popit(m Messenger) (string, error) {
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("QueueDeclare: %v", err)
+		return fmt.Errorf("QueueDeclare: %v", err)
 	}
 
 	msg, err := ch.Consume(
@@ -66,12 +66,12 @@ func (r *rabbitWorker) Popit(m Messenger) (string, error) {
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("Consume: %v", err)
+		return fmt.Errorf("Consume: %v", err)
 	}
 
 	go func() {
 		for d := range msg {
-			if !m(d.Body) {
+			if !m(string(d.Body)) {
 				err := d.Nack(true, true)
 				fmt.Printf("Nack: %v\n", err)
 				continue
@@ -79,6 +79,8 @@ func (r *rabbitWorker) Popit(m Messenger) (string, error) {
 			d.Ack(false)
 		}
 	}()
+
+	return nil
 }
 
 func (r *rabbitWorker) Close() error {
