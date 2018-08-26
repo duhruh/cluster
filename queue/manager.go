@@ -1,12 +1,13 @@
-package job
+package queue
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
 	"log"
+
+	"github.com/streadway/amqp"
 )
 
-type JobQueue interface {
+type Manager interface {
 	Connect() error
 	Publish(string) error
 	Close() error
@@ -21,10 +22,10 @@ type rabbitJobQueue struct {
 	queueName    string
 }
 
-func NewRabbitMQ(uri string) JobQueue {
+func NewRabbitMQManager(uri string) Manager {
 	return &rabbitJobQueue{
-		amqpURI: uri,
-		//		exchange:     "swarm-exchange",
+		amqpURI:      uri,
+		exchange:     "",
 		exchangeType: "direct",
 		routingKey:   "swarm-work",
 		queueName:    "swarm-queue",
@@ -68,10 +69,10 @@ func (r *rabbitJobQueue) Publish(message string) error {
 	defer confirmOne(confirms)
 
 	if err = channel.Publish(
-		r.exchange,   // publish to an exchange
-		r.routingKey, // routing to 0 or more queues
-		false,        // mandatory
-		false,        // immediate
+		r.exchange, // publish to an exchange
+		q.Name,     // routing to 0 or more queues
+		false,      // mandatory
+		false,      // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",

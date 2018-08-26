@@ -1,21 +1,30 @@
 package main
 
 import (
-	"github.com/duhruh/cluster/job"
+	"github.com/duhruh/cluster/queue"
 )
 
 func main() {
 
-	rabbit := job.NewRabbitMQ("amqp://guest:guest@rabbit-manage:5672/")
+	rabbit := queue.NewRabbitMQWorker("amqp://guest:guest@rabbit-manage:5672/")
 
 	err := rabbit.Connect()
 	if err != nil {
 		println(err.Error())
 	}
 
-	err = rabbit.Publish("hello messages this could be something great")
+	forever := make(chan bool)
+	err = rabbit.Popit(myMessenger)
 	if err != nil {
 		println(err.Error())
 	}
+	println("gonna wait for messages")
+	<-forever
 
+}
+
+func myMessenger(message string) bool {
+	println(message)
+
+	return true
 }

@@ -1,38 +1,48 @@
 version: "3.4"
+
 services:
-        manager:
-                build: .
-                volumes:
-                        - .:/go/src/github.com/duhruh/cluster
-                depends_on:
-                        - rabbit-manage
-                command: [
-                "go", "run", "cmd/manager/main.go"
-                ]
-                networks:
-                        - backend
-                          #        rabbit:
-                          #                image: rabbitmq
-                          #                ports:
-                          #                        - "5672:5672"
-                          #                        - "15672:15672"
-        worker:
-                build: .
-                volumes:
-                        - .:/go/src/github.com/duhruh/cluster
-                depends_on:
-                        - rabbit-manage
-                command: [
-                "go", "run", "cmd/worker/main.go"
-                ]
-                networks:
-                        - backend
-        rabbit-manage:
-                image: rabbitmq:management
-                ports:
-                        - "15672:15672"
-                networks:
-                        - backend
+
+    manager:
+        image: 127.0.0.1:5000/cluster/manager
+        build: .
+        volumes:
+            - .:/go/src/github.com/duhruh/cluster
+        depends_on:
+            - rabbit-manage
+        command: [
+            "go", "run", "cmd/manager/main.go"
+        ]
+        networks:
+            - backend
+
+              #    rabbit:
+              #        image: rabbitmq
+              #        ports:
+              #            - "5672:5672"
+
+    worker:
+        image: 127.0.0.1:5000/cluster/worker
+        build: .
+        volumes:
+            - .:/go/src/github.com/duhruh/cluster
+        depends_on:
+            - rabbit-manage
+        command: [
+            "go", "run", "cmd/worker/main.go"
+        ]
+        networks:
+            - backend
+        deploy:
+            replicas: 4
+
+    rabbit-manage:
+        image: 127.0.0.1:5000/rabbitmq:management
+        ports:
+            - "15672:15672"
+        networks:
+            - backend
+
 networks:
-        backend:
-                driver: "bridge"
+    backend:
+        driver: overlay
+        attachable: true

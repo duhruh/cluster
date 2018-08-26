@@ -1,4 +1,4 @@
-package job
+package queue
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 
 type Worker interface {
 	Connect() error
-	Popit(Messenger) error
+	Popit(Job) error
 	Close() error
 }
 
-type Messenger func(msg string) bool
+type Job func(msg string) bool
 
 type rabbitWorker struct {
 	amqpURI    string
@@ -19,7 +19,7 @@ type rabbitWorker struct {
 	queueName  string
 }
 
-func NewRabbitWorker(uri string) Worker {
+func NewRabbitMQWorker(uri string) Worker {
 	return &rabbitWorker{
 		amqpURI:       uri,
 		queueName: "swarm-queue",
@@ -36,7 +36,7 @@ func (r *rabbitWorker) Connect() error {
 	return nil
 }
 
-func (r *rabbitWorker) Popit(m Messenger) error {
+func (r *rabbitWorker) Popit(m Job) error {
 	ch, err := r.connection.Channel()
 	if err != nil {
 		return fmt.Errorf("Channel: %v", err)
