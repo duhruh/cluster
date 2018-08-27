@@ -9,7 +9,7 @@ import (
 
 type Manager interface {
 	Connect() error
-	Publish(string) error
+	Publish([]byte) error
 	Close() error
 }
 
@@ -42,7 +42,7 @@ func (r *rabbitJobQueue) Connect() error {
 	return nil
 }
 
-func (r *rabbitJobQueue) Publish(message string) error {
+func (r *rabbitJobQueue) Publish(message []byte) error {
 	channel, err := r.connection.Channel()
 	if err != nil {
 		return fmt.Errorf("Channel: %s", err)
@@ -77,7 +77,7 @@ func (r *rabbitJobQueue) Publish(message string) error {
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",
 			ContentEncoding: "",
-			Body:            []byte(message),
+			Body:            message,
 			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
 			Priority:        0,              // 0-9
 			// a bunch of application/implementation-specific fields
@@ -93,10 +93,10 @@ func (r *rabbitJobQueue) Close() error {
 }
 
 func confirmOne(confirms <-chan amqp.Confirmation) {
-	log.Printf("waiting for confirmation of one publishing")
+	//	log.Printf("waiting for confirmation of one publishing")
 
 	if confirmed := <-confirms; confirmed.Ack {
-		log.Printf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag)
+		//		log.Printf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag)
 	} else {
 		log.Printf("failed delivery of delivery tag: %d", confirmed.DeliveryTag)
 	}

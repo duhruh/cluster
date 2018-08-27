@@ -6,11 +6,7 @@ services:
         image: 127.0.0.1:5000/cluster/manager
         build:
             context: .
-            target: dev
             dockerfile: cmd/manager/Dockerfile
-        command: [
-            "go", "run", "cmd/manager/main.go"
-        ]
         volumes:
             - .:/go/src/github.com/duhruh/cluster
         depends_on:
@@ -22,11 +18,7 @@ services:
         image: 127.0.0.1:5000/cluster/worker
         build:
             context: .
-            target: dev
             dockerfile: cmd/worker/Dockerfile
-        command: [
-            "go", "run", "cmd/worker/main.go"
-        ]
         volumes:
             - .:/go/src/github.com/duhruh/cluster
         depends_on:
