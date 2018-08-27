@@ -3,6 +3,7 @@ package queue
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -20,6 +21,8 @@ type rabbitJobQueue struct {
 	exchangeType string
 	routingKey   string
 	queueName    string
+	channel      *amqp.Channel
+	queue        amqp.Queue
 }
 
 func NewRabbitMQManager(uri string) Manager {
@@ -38,17 +41,14 @@ func (r *rabbitJobQueue) Connect() error {
 		return fmt.Errorf("Dial: %s", err)
 	}
 	r.connection = connection
-
-	return nil
-}
-
-func (r *rabbitJobQueue) Publish(message []byte) error {
 	channel, err := r.connection.Channel()
 	if err != nil {
-		return fmt.Errorf("Channel: %s", err)
+		time.Sleep(1 * time.Second)
+		return fmt.Errorf("Channel: %s: gonna sleep", err)
 	}
+	r.channel = channel
 
-	q, err := channel.QueueDeclare(
+	q, err := r.channel.QueueDeclare(
 		r.queueName,
 		false,
 		false,
@@ -59,20 +59,53 @@ func (r *rabbitJobQueue) Publish(message []byte) error {
 	if err != nil {
 		return fmt.Errorf("QueueDeclare: %v", err)
 	}
+	r.queue = q
 
-	if err := channel.Confirm(false); err != nil {
-		return fmt.Errorf("Channel could not be put into confirm mode: %s", err)
-	}
+	//	if err := r.channel.Confirm(false); err != nil {
+	//		return fmt.Errorf("Channel could not be put into confirm mode: %s", err)
+	//	}
 
-	confirms := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	//	confirms := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 
-	defer confirmOne(confirms)
+	//	go confirmOne(confirms)
 
-	if err = channel.Publish(
-		r.exchange, // publish to an exchange
-		q.Name,     // routing to 0 or more queues
-		false,      // mandatory
-		false,      // immediate
+	return nil
+}
+
+func (r *rabbitJobQueue) Publish(message []byte) error {
+	/*
+		channel, err := r.connection.Channel()
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			return fmt.Errorf("Channel: %s: gonna sleep", err)
+		}
+
+		q, err := channel.QueueDeclare(
+			r.queueName,
+			false,
+			false,
+			false,
+			false,
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("QueueDeclare: %v", err)
+		}
+
+		if err := channel.Confirm(false); err != nil {
+			return fmt.Errorf("Channel could not be put into confirm mode: %s", err)
+		}
+
+		confirms := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+
+		defer confirmOne(confirms)
+	*/
+	//println(".")
+	if err := r.channel.Publish(
+		r.exchange,   // publish to an exchange
+		r.queue.Name, // routing to 0 or more queues
+		false,        // mandatory
+		false,        // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",

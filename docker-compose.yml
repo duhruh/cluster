@@ -13,35 +13,37 @@ services:
         ]
         volumes:
             - .:/go/src/github.com/duhruh/cluster
-        depends_on:
-            - rabbit-manage
+            - /media/pi/72B7-554A:/outusb
+              #        depends_on:
+              #            - rabbit-manage
         networks:
             - backend
 
-    worker:
-        image: 127.0.0.1:5000/cluster/worker
-        build:
-            context: .
-            target: dev
-            dockerfile: cmd/worker/Dockerfile
-        command: [
-            "go", "run", "cmd/worker/main.go"
-        ]
-        volumes:
-            - .:/go/src/github.com/duhruh/cluster
-        depends_on:
-            - rabbit-manage
-        networks:
-            - backend
-        deploy:
-            replicas: 4
+              #    worker:
+              #        image: 127.0.0.1:5000/cluster/worker
+              #        build:
+              #            context: .
+              #            target: dev
+              #            dockerfile: cmd/worker/Dockerfile
+              #        command: [
+              #            "go", "run", "cmd/worker/main.go"
+              #        ]
+              #        volumes:
+              #            - .:/go/src/github.com/duhruh/cluster
+              #            - /media/pi/72B7-554A:/outusb
+              #        depends_on:
+              #            - rabbit-manage
+              #        networks:
+              #            - backend
+              #        deploy:
+              #            replicas: 4
 
-    rabbit-manage:
-        image: 127.0.0.1:5000/rabbitmq:management
-        ports:
-            - "15672:15672"
-        networks:
-            - backend
+            #rabbit-manage:
+            #        image: 127.0.0.1:5000/rabbitmq:management
+            #        ports:
+            #            - "15672:15672"
+            #        networks:
+            #            - backend
 
 networks:
     backend:

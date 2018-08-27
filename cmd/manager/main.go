@@ -41,7 +41,7 @@ func httpReporter(wg sync.WaitGroup) {
 	http.ListenAndServe(":8080", nil)
 }
 
-const target = "bf80c0af044154e04327bf4fd407f45f"
+const target = "b6fe428350544bea67513196957573d1"
 const fmtstring = "{\"line\":\"%s\",\"md5\":\"%s\"}"
 
 func processUSBShit(wg sync.WaitGroup) {
@@ -53,7 +53,7 @@ func processUSBShit(wg sync.WaitGroup) {
 		println(err.Error())
 	}
 
-	file, err := os.Open("test.txt")
+	file, err := os.Open("/outusb/nnnnn.txt")
 	if err != nil {
 		panic(err)
 	}

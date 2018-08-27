@@ -8,6 +8,9 @@ services:
             - cluster_backend
         deploy:
             replicas: 5
+            placement:
+                constraints:
+                    - node.labels.type == pokemon
 
 networks:
     cluster_backend:
