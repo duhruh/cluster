@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/duhruh/cluster/queue"
 )
@@ -44,7 +43,7 @@ func httpReporter(wg sync.WaitGroup) {
 	http.ListenAndServe(":8080", nil)
 }
 
-const target = "59bb5beee293c5ee42638b8d73dc6676"
+const target = "69e5ac0cf03478d7e20b6fd3c7451c6f"
 const fmtstring = "{\"line\":\"%s\",\"md5\":\"%s\"}"
 
 func processUSBShit(wg sync.WaitGroup) {
@@ -70,7 +69,11 @@ func processUSBShit(wg sync.WaitGroup) {
 		return nil
 	})
 
-	for _, file := range files {
+	length := len(files)
+	for k, file := range files {
+		start := k + 1
+
+		println(fmt.Sprintf("you're at %s and %d/%d", file, start, length))
 		fileHandle, err := os.Open(file)
 		if err != nil {
 			panic(err)
@@ -79,9 +82,9 @@ func processUSBShit(wg sync.WaitGroup) {
 		scanner := bufio.NewScanner(fileHandle)
 		i := 0
 		for scanner.Scan() {
-			if i%2000 == 0 {
-				time.Sleep(1 * time.Second)
-			}
+			//if i%2000 == 0 {
+			//	time.Sleep(1 * time.Second)
+			//}
 			err = rabbit.Publish([]byte(fmt.Sprintf(fmtstring, scanner.Text(), target)))
 			if err != nil {
 				rabbit.Connect()
