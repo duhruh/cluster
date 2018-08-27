@@ -6,7 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/duhruh/cluster/queue"
 )
@@ -41,7 +44,7 @@ func httpReporter(wg sync.WaitGroup) {
 	http.ListenAndServe(":8080", nil)
 }
 
-const target = "b6fe428350544bea67513196957573d1"
+const target = "59bb5beee293c5ee42638b8d73dc6676"
 const fmtstring = "{\"line\":\"%s\",\"md5\":\"%s\"}"
 
 func processUSBShit(wg sync.WaitGroup) {
@@ -52,18 +55,41 @@ func processUSBShit(wg sync.WaitGroup) {
 	if err != nil {
 		println(err.Error())
 	}
+	///media/pi/72B7-554A/round1/
+	directory := "/outusb/round1"
 
-	file, err := os.Open("/outusb/nnnnn.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		err = rabbit.Publish([]byte(fmt.Sprintf(fmtstring, scanner.Text(), target)))
-		if err != nil {
-			println(err.Error())
+	files := []string{}
+	filepath.Walk(directory, func(path string, f os.FileInfo, err error) error {
+		if f.IsDir() {
+			return nil
 		}
+		if !strings.HasSuffix(path, ".txt") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+
+	for _, file := range files {
+		fileHandle, err := os.Open(file)
+		if err != nil {
+			panic(err)
+		}
+		defer fileHandle.Close()
+		scanner := bufio.NewScanner(fileHandle)
+		i := 0
+		for scanner.Scan() {
+			if i%2000 == 0 {
+				time.Sleep(1 * time.Second)
+			}
+			err = rabbit.Publish([]byte(fmt.Sprintf(fmtstring, scanner.Text(), target)))
+			if err != nil {
+				rabbit.Connect()
+				println(err.Error())
+			}
+			i++
+		}
+
 	}
 	println("if you haven't found it by now you never will")
 }

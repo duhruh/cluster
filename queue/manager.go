@@ -54,7 +54,7 @@ func (r *rabbitJobQueue) Connect() error {
 		false,
 		false,
 		false,
-		nil,
+		amqp.Table{},
 	)
 	if err != nil {
 		return fmt.Errorf("QueueDeclare: %v", err)

@@ -2,6 +2,7 @@ package queue
 
 import (
 	"fmt"
+
 	"github.com/streadway/amqp"
 )
 
@@ -21,7 +22,7 @@ type rabbitWorker struct {
 
 func NewRabbitMQWorker(uri string) Worker {
 	return &rabbitWorker{
-		amqpURI:       uri,
+		amqpURI:   uri,
 		queueName: "swarm-queue",
 	}
 }
@@ -71,9 +72,13 @@ func (r *rabbitWorker) Popit(m Job) error {
 
 	go func() {
 		for d := range msg {
+			if d.Redelivered {
+				d.Reject(false)
+				continue
+			}
 			if !m(string(d.Body)) {
-				err := d.Nack(true, true)
-				fmt.Printf("Nack: %v\n", err)
+				d.Nack(true, true)
+				//fmt.Printf("Nack: %v\n", err)
 				continue
 			}
 			d.Ack(false)
