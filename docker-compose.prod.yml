@@ -35,6 +35,17 @@ services:
         networks:
             - backend
 
+    file-server:
+        image: nginx
+        volumes:
+            - /media/pi/72B7-554A:/usr/share/nginx/html:ro
+            - ./docker/nginx:/etc/nginx/conf.d
+        ports:
+            - "80:80"
+        networks:
+            - backend
+
+
 networks:
     backend:
         driver: overlay

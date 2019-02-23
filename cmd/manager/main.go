@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +13,13 @@ import (
 	"github.com/duhruh/cluster/queue"
 )
 
+var (
+	targetMD5 = flag.String("md5", "", "target md5 sum")
+	charLen   = flag.Int("len", 10, "the char len")
+)
+
 func main() {
+	flag.Parse()
 
 	var wg sync.WaitGroup
 
@@ -44,7 +50,7 @@ func httpReporter(wg sync.WaitGroup) {
 }
 
 const target = "69e5ac0cf03478d7e20b6fd3c7451c6f"
-const fmtstring = "{\"line\":\"%s\",\"md5\":\"%s\"}"
+const fmtstring = "{\"line\":\"%s\",\"md5\":\"%s\",\"len\":%v}"
 
 func processUSBShit(wg sync.WaitGroup) {
 	defer wg.Done()
@@ -71,28 +77,17 @@ func processUSBShit(wg sync.WaitGroup) {
 
 	length := len(files)
 	for k, file := range files {
-		start := k + 1
 
-		println(fmt.Sprintf("you're at %s and %d/%d", file, start, length))
-		fileHandle, err := os.Open(file)
+		println(fmt.Sprintf("you're at %s and %d/%d", file, k, length))
+		uri := fmt.Sprintf("http://file-server%v", strings.Replace(file, "/outusb", "", 1))
+		payload := fmt.Sprintf(fmtstring, uri, *targetMD5, *charLen)
+
+		err = rabbit.Publish([]byte(payload))
 		if err != nil {
-			panic(err)
-		}
-		defer fileHandle.Close()
-		scanner := bufio.NewScanner(fileHandle)
-		i := 0
-		for scanner.Scan() {
-			//if i%2000 == 0 {
-			//	time.Sleep(1 * time.Second)
-			//}
-			err = rabbit.Publish([]byte(fmt.Sprintf(fmtstring, scanner.Text(), target)))
-			if err != nil {
-				rabbit.Connect()
-				println(err.Error())
-			}
-			i++
+			rabbit.Connect()
+			println(err.Error())
 		}
 
 	}
-	println("if you haven't found it by now you never will")
+	println("you have posted all the messages")
 }

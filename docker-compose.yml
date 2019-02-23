@@ -2,6 +2,13 @@ version: "3.4"
 
 services:
 
+    file-server:
+        image: nginx
+        volumes:
+            - /media/pi/72B7-554A:/usr/share/nginx/html:ro
+            - ./docker/nginx:/etc/nginx/conf.d
+        ports:
+            - "8080:80"
     manager:
         image: 127.0.0.1:5000/cluster/manager
         build:
@@ -9,7 +16,7 @@ services:
             target: dev
             dockerfile: cmd/manager/Dockerfile
         command: [
-            "go", "run", "cmd/manager/main.go"
+            "go", "run", "cmd/manager/main.go", "--md5", "${MD5}", "--len", "${CHARLEN}"
         ]
         volumes:
             - .:/go/src/github.com/duhruh/cluster
